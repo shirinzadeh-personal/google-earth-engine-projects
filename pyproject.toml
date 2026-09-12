@@ -1,0 +1,7 @@
+[project]
+name = "google-earth-engine-projects"
+version = "0.1.0"
+description = "Google Earth Engine projects for remote sensing analysis and geospatial applications."
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = []
