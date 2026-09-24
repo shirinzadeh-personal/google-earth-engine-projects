@@ -1,0 +1,136 @@
+<span id="markdown-mermaid" aria-hidden="true" data-config="{&quot;darkModeTheme&quot;:&quot;vscode&quot;,&quot;lightModeTheme&quot;:&quot;vscode&quot;,&quot;maxTextSize&quot;:50000,&quot;clickDrag&quot;:&quot;alt&quot;,&quot;showControls&quot;:&quot;onHoverOrFocus&quot;,&quot;resizable&quot;:true,&quot;maxHeight&quot;:&quot;&quot;}"></span>
+				<h1 id="landsat-monthly-surface-temperature">Landsat Monthly Surface Temperature</h1>
+<h2 id="project-overview">Project Overview</h2>
+<p>This project uses Google Earth Engine to calculate and visualize monthly Land Surface Temperature (LST) from Landsat 8 and Landsat 9 Collection 2 Level 2 data.</p>
+<p>The workflow combines Landsat 8 and Landsat 9 observations, creates monthly median composites, converts the <code>ST_B10</code> thermal band to Celsius, generates a monthly temperature time series, and displays each month as a separate map layer.</p>
+<h2 id="objectives">Objectives</h2>
+<ul>
+<li>Calculate monthly Land Surface Temperature</li>
+<li>Combine Landsat 8 and Landsat 9 observations</li>
+<li>Generate monthly median composites</li>
+<li>Analyze monthly temperature variation</li>
+<li>Visualize monthly temperature maps</li>
+</ul>
+<h2 id="data">Data</h2>
+<h3 id="landsat-8">Landsat 8</h3>
+<pre><code class="language-text">LANDSAT/LC08/C02/T1_L2
+</code></pre>
+<h3 id="landsat-9">Landsat 9</h3>
+<pre><code class="language-text">LANDSAT/LC09/C02/T1_L2
+</code></pre>
+<p>Both datasets are USGS Landsat Collection 2 Tier 1 Level 2 products containing surface temperature and quality-assurance information.</p>
+<h2 id="analysis-parameters">Analysis Parameters</h2>
+<pre><code class="language-text">Start Date: 2025-01-01
+End Date: 2026-01-01
+Cloud Cover: &lt; 50%
+Temporal Resolution: Monthly
+Composite Method: Median
+Temperature Unit: Celsius
+Spatial Resolution: 30 m
+</code></pre>
+<p>The date range can be changed to analyze other complete monthly periods.</p>
+<h2 id="workflow">Workflow</h2>
+<pre><code class="language-text">Study Area
+    ↓
+Analysis Parameters
+    ↓
+Landsat 8 Collection
+    ↓
+Landsat 9 Collection
+    ↓
+Merge and Sort
+    ↓
+Monthly Median Composites
+    ↓
+Surface Temperature Calculation
+    ↓
+Monthly Temperature Time Series
+    ↓
+Monthly Temperature Map Layers
+</code></pre>
+<h2 id="processing-steps">Processing Steps</h2>
+<h3 id="1-study-area-definition">1. Study Area Definition</h3>
+<p>A rectangular study area is defined using geographic coordinates and stored as <code>studyArea</code>.</p>
+<h3 id="2-image-collection-filtering">2. Image Collection Filtering</h3>
+<p>Landsat 8 and Landsat 9 collections are filtered by:</p>
+<ul>
+<li>Study area</li>
+<li>Analysis date range</li>
+<li>Scene-level cloud cover</li>
+</ul>
+<p>The two filtered collections are then merged and sorted by acquisition time.</p>
+<h3 id="3-monthly-composite-generation">3. Monthly Composite Generation</h3>
+<p>The analysis period is divided into monthly intervals.</p>
+<p>For each month:</p>
+<ol>
+<li>Images within the monthly interval are selected.</li>
+<li>A pixel-wise median composite is calculated.</li>
+<li>The first day of the month is stored as <code>system:time_start</code>.</li>
+</ol>
+<p>The result is a monthly <code>ImageCollection</code>.</p>
+<h3 id="4-surface-temperature-calculation">4. Surface Temperature Calculation</h3>
+<p>The <code>ST_B10</code> band is converted from the stored Landsat Level 2 value to Kelvin and then to Celsius.</p>
+<pre><code class="language-text">ST_B10 × 0.00341802 + 149.0
+        ↓
+Temperature in Kelvin
+        ↓
+Temperature in Celsius
+</code></pre>
+<p>The resulting band is renamed:</p>
+<pre><code class="language-text">Surface_Temperature
+</code></pre>
+<h3 id="5-temperature-time-series">5. Temperature Time Series</h3>
+<p>For each monthly composite, the mean temperature of the study area is calculated and displayed as a time series.</p>
+<pre><code class="language-text">Monthly Image
+    ↓
+Mean Temperature over Study Area
+    ↓
+Time Series Chart
+</code></pre>
+<h3 id="6-monthly-map-visualization">6. Monthly Map Visualization</h3>
+<p>Each monthly temperature composite is displayed as a separate map layer.</p>
+<p>The layer names follow the month names:</p>
+<pre><code class="language-text">Temperature January
+Temperature February
+Temperature March
+...
+Temperature December
+</code></pre>
+<p>All monthly layers are clipped to the study area.</p>
+<h2 id="visualization">Visualization</h2>
+<p>The current temperature visualization uses:</p>
+<pre><code class="language-text">Minimum: 0 °C
+Maximum: 50 °C
+</code></pre>
+<p>with a sequential color palette from blue to red.</p>
+<p>These values are visualization parameters and do not define the actual minimum or maximum temperature in the dataset.</p>
+<h2 id="outputs">Outputs</h2>
+<h3 id="monthly-temperature-collection">Monthly Temperature Collection</h3>
+<pre><code class="language-text">surfaceTemperature
+</code></pre>
+<p>A monthly <code>ImageCollection</code> containing surface temperature in Celsius.</p>
+<h3 id="temperature-time-series">Temperature Time Series</h3>
+<pre><code class="language-text">temperatureChart
+</code></pre>
+<p>A chart showing the mean monthly surface temperature of the study area.</p>
+<h3 id="monthly-temperature-maps">Monthly Temperature Maps</h3>
+<p>Twelve independent map layers are generated for the selected analysis period.</p>
+<h2 id="project-structure">Project Structure</h2>
+<pre><code class="language-text">landsat-monthly-surface-temperature/
+├── README.md
+└── landsat-monthly-surface-temperature.js
+</code></pre>
+<h2 id="limitations">Limitations</h2>
+<p>The current workflow uses the <code>CLOUD_COVER</code> scene-level property as a cloud filtering criterion. It does not currently apply pixel-level cloud and cloud-shadow masking using <code>QA_PIXEL</code>.</p>
+<p>The monthly composite method is based on the median of available observations. Months with limited valid observations may therefore contain fewer observations than other months.</p>
+<p>Some Landsat Level 2 assets may contain empty surface-temperature bands when surface-temperature processing is unavailable.</p>
+<h2 id="references">References</h2>
+<ul>
+<li>Google Earth Engine Data Catalog — Landsat 8 Collection 2 Level 2</li>
+<li>Google Earth Engine Data Catalog — Landsat 9 Collection 2 Level 2</li>
+<li>Google Earth Engine API Documentation — <code>ee.ImageCollection.median()</code></li>
+<li>Google Earth Engine API Documentation — <code>ee.ImageCollection.filterDate()</code></li>
+<li>Google Earth Engine API Documentation — <code>ee.Date.advance()</code></li>
+<li>Google Earth Engine API Documentation — <code>ui.Chart.image.series()</code></li>
+<li>Google Earth Engine API Documentation — <code>Map.addLayer()</code></li>
+</ul>

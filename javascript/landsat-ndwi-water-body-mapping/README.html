@@ -1,0 +1,24 @@
+<span id="markdown-mermaid" aria-hidden="true" data-config="{&quot;darkModeTheme&quot;:&quot;vscode&quot;,&quot;lightModeTheme&quot;:&quot;vscode&quot;,&quot;maxTextSize&quot;:50000,&quot;clickDrag&quot;:&quot;alt&quot;,&quot;showControls&quot;:&quot;onHoverOrFocus&quot;,&quot;resizable&quot;:true,&quot;maxHeight&quot;:&quot;&quot;}"></span>
+				<h1 id="landsat-8-ndwi-water-body-mapping">Landsat 8 NDWI Water Body Mapping</h1>
+<p>A Google Earth Engine project for water body extraction and surface water area estimation using Landsat 8 Surface Reflectance imagery and the Normalized Difference Water Index (NDWI).</p>
+<h2 id="overview">Overview</h2>
+<p>This project uses Landsat 8 Collection 2 Level-2 Surface Reflectance data to identify water bodies within a defined study area.</p>
+<p>The workflow includes:</p>
+<ul>
+<li>Filtering Landsat 8 images by study area and acquisition date</li>
+<li>Applying surface reflectance scaling</li>
+<li>Calculating NDWI</li>
+<li>Creating a temporal median composite</li>
+<li>Extracting water pixels using an NDWI threshold</li>
+<li>Estimating water surface area in square kilometers</li>
+</ul>
+<h2 id="methodology">Methodology</h2>
+<p>The Normalized Difference Water Index (NDWI) is calculated as:</p>
+<p>NDWI = (Green - NIR) / (Green + NIR)</p>
+<p>For Landsat 8 imagery:</p>
+<ul>
+<li>Green band: <code>SR_B3</code></li>
+<li>Near Infrared band: <code>SR_B5</code></li>
+</ul>
+<p>Water extraction is performed using an NDWI threshold:</p>
+<pre><code class="language-text">NDWI &gt; 0.1</code></pre>
