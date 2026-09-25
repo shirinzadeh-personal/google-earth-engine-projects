@@ -1,0 +1,118 @@
+<span id="markdown-mermaid" aria-hidden="true" data-config="{&quot;darkModeTheme&quot;:&quot;vscode&quot;,&quot;lightModeTheme&quot;:&quot;vscode&quot;,&quot;maxTextSize&quot;:50000,&quot;clickDrag&quot;:&quot;alt&quot;,&quot;showControls&quot;:&quot;onHoverOrFocus&quot;,&quot;resizable&quot;:true,&quot;maxHeight&quot;:&quot;&quot;}"></span>
+				<h1 id="modis-annual-cropland-area">MODIS Annual Cropland Area</h1>
+<h2 id="project-overview">Project Overview</h2>
+<p>This project uses Google Earth Engine to estimate annual cropland area from the MODIS MCD12Q1 Version 6.1 land cover product.</p>
+<p>The workflow extracts selected cropland-related classes from the annual <code>LC_Type1</code> land cover classification, calculates their area in square kilometers, and generates an annual time series for the study area.</p>
+<h2 id="objectives">Objectives</h2>
+<ul>
+<li>Extract cropland-related land cover classes</li>
+<li>Calculate annual cropland area</li>
+<li>Analyze changes in cropland area over time</li>
+<li>Generate an annual cropland area time series</li>
+</ul>
+<h2 id="data">Data</h2>
+<h3 id="modis-mcd12q1">MODIS MCD12Q1</h3>
+<pre><code class="language-text">MODIS/061/MCD12Q1
+</code></pre>
+<p>MCD12Q1 Version 6.1 provides global land cover information at yearly intervals with a spatial resolution of 500 meters.</p>
+<p>The project uses:</p>
+<pre><code class="language-text">LC_Type1
+</code></pre>
+<p>which represents the annual IGBP land cover classification.</p>
+<h3 id="selected-classes">Selected Classes</h3>
+<pre><code class="language-text">12 → Croplands
+14 → Cropland/Natural Vegetation Mosaics
+</code></pre>
+<p>Class 14 represents mosaics of small-scale cultivation with natural vegetation and is therefore included as a cropland-related class in this analysis. <a href="https://developers.google.com/earth-engine/datasets/catalog/MODIS_061_MCD12Q1">Google Earth Engine Data Catalog</a></p>
+<h2 id="analysis-parameters">Analysis Parameters</h2>
+<pre><code class="language-text">Start Date: 2001-01-01
+End Date: 2024-01-01
+Temporal Resolution: Yearly
+Spatial Resolution: 500 m
+Area Unit: km²
+</code></pre>
+<p>The current date range selects the annual observations from 2001 through 2023.</p>
+<h2 id="workflow">Workflow</h2>
+<pre><code class="language-text">Study Area
+    ↓
+Analysis Parameters
+    ↓
+MODIS MCD12Q1 Collection
+    ↓
+Select LC_Type1
+    ↓
+Extract Classes 12 and 14
+    ↓
+Create Cropland Mask
+    ↓
+Calculate Pixel Area
+    ↓
+Convert to km²
+    ↓
+Annual Cropland Area
+    ↓
+Time Series Chart
+</code></pre>
+<h2 id="processing-steps">Processing Steps</h2>
+<h3 id="1-study-area-definition">1. Study Area Definition</h3>
+<p>A rectangular study area is defined using geographic coordinates and stored as <code>studyArea</code>.</p>
+<h3 id="2-modis-image-collection">2. MODIS Image Collection</h3>
+<p>The MCD12Q1 collection is filtered by:</p>
+<ul>
+<li>Study area</li>
+<li>Analysis date range</li>
+</ul>
+<p>Only the <code>LC_Type1</code> band is retained for the analysis.</p>
+<h3 id="3-cropland-extraction">3. Cropland Extraction</h3>
+<p>Pixels belonging to classes 12 and 14 are selected from <code>LC_Type1</code>.</p>
+<p>A binary cropland mask is then created and non-cropland pixels are masked.</p>
+<h3 id="4-area-calculation">4. Area Calculation</h3>
+<p>The cropland mask is multiplied by <code>ee.Image.pixelArea()</code> to obtain the area of each selected pixel.</p>
+<p>The result is divided by <code>1e6</code> to convert square meters to square kilometers.</p>
+<pre><code class="language-text">Cropland Mask
+    ↓
+Pixel Area
+    ↓
+m²
+    ↓
+km²
+</code></pre>
+<p>The <code>pixelArea()</code> function provides the area of each pixel in square meters. <a href="https://developers.google.com/earth-engine/apidocs/ee-image-pixelarea">Google Earth Engine API Documentation</a></p>
+<h3 id="5-annual-time-series">5. Annual Time Series</h3>
+<p>For each annual cropland-area image, the pixel values within the study area are summed using <code>ee.Reducer.sum()</code>.</p>
+<p>The result represents the total selected cropland-related area in square kilometers for each year.</p>
+<p>The <code>system:time_start</code> property is preserved from the original MODIS images and is used as the time axis of the chart. <a href="https://developers.google.com/earth-engine/apidocs/ui-chart-image-series">Google Earth Engine API Documentation</a></p>
+<h2 id="outputs">Outputs</h2>
+<h3 id="cropland-area-collection">Cropland Area Collection</h3>
+<pre><code class="language-text">cropland
+</code></pre>
+<p>An annual <code>ImageCollection</code> containing cropland-related area values in km².</p>
+<h3 id="cropland-area-time-series">Cropland Area Time Series</h3>
+<pre><code class="language-text">croplandAreaChart
+</code></pre>
+<p>A chart showing annual changes in cropland-related area within the study area.</p>
+<h2 id="project-structure">Project Structure</h2>
+<pre><code class="language-text">modis-annual-cropland-area/
+├── README.md
+└── modis-annual-cropland-area.js
+</code></pre>
+<h2 id="limitations">Limitations</h2>
+<p>The analysis is based on the <code>LC_Type1</code> IGBP classification from MCD12Q1.</p>
+<p>Class 14 is a mixed class containing both cultivated and natural vegetation. Therefore, the calculated area represents the combined area of classes 12 and 14 rather than cropland-only class 12.</p>
+<p>The spatial resolution of the source dataset is 500 meters, so the resulting area estimates are constrained by the MODIS land cover classification and spatial resolution.</p>
+<p>The current workflow does not use the MCD12Q1 quality-control band to exclude low-quality or unclassified pixels.</p>
+<h2 id="references">References</h2>
+<ul>
+<li>
+<p>Google Earth Engine Data Catalog — MCD12Q1.061 MODIS Land Cover Type Yearly Global 500m
+<a href="https://developers.google.com/earth-engine/datasets/catalog/MODIS_061_MCD12Q1">https://developers.google.com/earth-engine/datasets/catalog/MODIS_061_MCD12Q1</a></p>
+</li>
+<li>
+<p>Google Earth Engine API Documentation — <code>ee.Image.pixelArea()</code>
+<a href="https://developers.google.com/earth-engine/apidocs/ee-image-pixelarea">https://developers.google.com/earth-engine/apidocs/ee-image-pixelarea</a></p>
+</li>
+<li>
+<p>Google Earth Engine API Documentation — <code>ui.Chart.image.series()</code>
+<a href="https://developers.google.com/earth-engine/apidocs/ui-chart-image-series">https://developers.google.com/earth-engine/apidocs/ui-chart-image-series</a></p>
+</li>
+</ul>
