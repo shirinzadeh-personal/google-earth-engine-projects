@@ -1,0 +1,165 @@
+<span id="markdown-mermaid" aria-hidden="true" data-config="{&quot;darkModeTheme&quot;:&quot;vscode&quot;,&quot;lightModeTheme&quot;:&quot;vscode&quot;,&quot;maxTextSize&quot;:50000,&quot;clickDrag&quot;:&quot;alt&quot;,&quot;showControls&quot;:&quot;onHoverOrFocus&quot;,&quot;resizable&quot;:true,&quot;maxHeight&quot;:&quot;&quot;}"></span>
+				<h1 id="modis-ndwi-water-body-mapping">MODIS NDWI Water Body Mapping</h1>
+<h2 id="project-overview">Project Overview</h2>
+<p>This project uses Google Earth Engine to identify potential water bodies and estimate their area using the Normalized Difference Water Index (NDWI) derived from MODIS surface reflectance data.</p>
+<p>The workflow processes MODIS MOD09A1 imagery, calculates NDWI, generates a temporal median composite, extracts potential water pixels using a configurable threshold, calculates their area, and visualizes NDWI changes over time.</p>
+<h2 id="objectives">Objectives</h2>
+<ul>
+<li>Calculate NDWI from MODIS surface reflectance imagery</li>
+<li>Generate a multi-year NDWI median composite</li>
+<li>Extract potential water bodies using an NDWI threshold</li>
+<li>Estimate the area of threshold-selected water pixels</li>
+<li>Visualize NDWI spatial distribution</li>
+<li>Analyze temporal changes in mean NDWI</li>
+</ul>
+<h2 id="data-source">Data Source</h2>
+<h3 id="modis-mod09a1-version-61">MODIS MOD09A1 Version 6.1</h3>
+<pre><code class="language-text">MODIS/061/MOD09A1
+</code></pre>
+<p>The MOD09A1 product provides atmospherically corrected surface reflectance observations at 500-meter spatial resolution and an 8-day temporal cadence.</p>
+<p>The project uses the following bands:</p>
+<table>
+<thead>
+<tr>
+<th>Band</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>sur_refl_b04</code></td>
+<td>Green surface reflectance</td>
+</tr>
+<tr>
+<td><code>sur_refl_b02</code></td>
+<td>Near-Infrared (NIR) surface reflectance</td>
+</tr>
+</tbody>
+</table>
+<p>The surface reflectance scale factor is <code>0.0001</code>.</p>
+<h2 id="analysis-parameters">Analysis Parameters</h2>
+<pre><code class="language-text">Start Date: 2001-01-01
+End Date: 2024-01-01
+Temporal Resolution: 8 days
+Spatial Resolution: 500 m
+NDWI Threshold: 0.1
+Area Unit: km²
+</code></pre>
+<p>The end date is exclusive. Therefore, the analysis period covers observations from January 2001 through December 2023.</p>
+<h2 id="workflow">Workflow</h2>
+<pre><code class="language-text">Study Area Definition
+        ↓
+Analysis Parameters
+        ↓
+MODIS Image Collection
+        ↓
+Surface Reflectance Scaling
+        ↓
+NDWI Calculation
+        ↓
+Temporal Median Composite
+        ↓
+NDWI Visualization
+        ↓
+Water Mask Extraction
+        ↓
+Water Area Calculation
+        ↓
+Final Water Area Output
+        ↓
+NDWI Time Series
+</code></pre>
+<h2 id="processing-steps">Processing Steps</h2>
+<h3 id="1-study-area-definition">1. Study Area Definition</h3>
+<p>A rectangular study area is defined using geographic coordinates and stored as <code>studyArea</code>.</p>
+<p>The map is centered on this geometry.</p>
+<h3 id="2-modis-image-collection">2. MODIS Image Collection</h3>
+<p>The MOD09A1 image collection is filtered by:</p>
+<ul>
+<li>Study area</li>
+<li>Analysis date range</li>
+</ul>
+<h3 id="3-surface-reflectance-scaling">3. Surface Reflectance Scaling</h3>
+<p>The Green and NIR bands are selected and multiplied by <code>0.0001</code> to convert the stored values to surface reflectance.</p>
+<h3 id="4-ndwi-calculation">4. NDWI Calculation</h3>
+<p>NDWI is calculated using the Green and Near-Infrared bands.</p>
+<pre><code class="language-text">NDWI = (Green - NIR) / (Green + NIR)
+</code></pre>
+<p>The resulting band is named <code>NDWI</code>.</p>
+<p>Pixels with a zero denominator are masked to avoid division by zero.</p>
+<h3 id="5-temporal-median-composite">5. Temporal Median Composite</h3>
+<p>A pixel-wise median composite is generated from the available NDWI images over the entire analysis period.</p>
+<p>The resulting image is clipped to the study area and stored as <code>modisNDWIMedian</code>.</p>
+<p>This composite represents the median NDWI for the full period, rather than NDWI for an individual year.</p>
+<h3 id="6-ndwi-visualization">6. NDWI Visualization</h3>
+<p>The median NDWI image is visualized over a range of <code>-1</code> to <code>1</code> using a sequential color palette.</p>
+<h3 id="7-water-mask-extraction">7. Water Mask Extraction</h3>
+<p>Potential water pixels are identified using the following threshold:</p>
+<pre><code class="language-text">NDWI &gt; 0.1
+</code></pre>
+<p>The resulting binary image is masked to retain only pixels that exceed the selected threshold.</p>
+<h3 id="8-water-area-calculation">8. Water Area Calculation</h3>
+<p>The area of each selected water pixel is calculated using <code>ee.Image.pixelArea()</code>.</p>
+<p>Pixel areas are converted from square meters to square kilometers.</p>
+<pre><code class="language-text">Water Mask
+    ↓
+Pixel Area (m²)
+    ↓
+Convert to km²
+    ↓
+Water Area per Pixel
+</code></pre>
+<h3 id="9-total-water-area">9. Total Water Area</h3>
+<p>The areas of all valid water pixels within the study area are summed using <code>ee.Reducer.sum()</code> and <code>reduceRegion()</code>.</p>
+<p>The resulting value is stored as <code>waterAreaKm2</code> and reported in square kilometers.</p>
+<p>The estimate represents the area of pixels whose median NDWI over the full analysis period exceeds the threshold. It is not an annual water area estimate.</p>
+<h3 id="10-ndwi-time-series">10. NDWI Time Series</h3>
+<p>A time series chart is generated using <code>ui.Chart.image.series()</code>.</p>
+<p>For each available MODIS NDWI image, the mean NDWI within the study area is calculated using <code>ee.Reducer.mean()</code>.</p>
+<p>The chart uses <code>system:time_start</code> as its temporal axis.</p>
+<h2 id="outputs">Outputs</h2>
+<h3 id="median-ndwi-image">Median NDWI Image</h3>
+<pre><code class="language-text">modisNDWIMedian
+</code></pre>
+<p>A multi-year median NDWI image clipped to the study area.</p>
+<h3 id="water-mask">Water Mask</h3>
+<pre><code class="language-text">waterMask
+</code></pre>
+<p>A masked image containing pixels with NDWI values greater than the configured threshold.</p>
+<h3 id="water-area-image">Water Area Image</h3>
+<pre><code class="language-text">waterAreaImage
+</code></pre>
+<p>An image containing the estimated water area per selected pixel in km².</p>
+<h3 id="total-water-area">Total Water Area</h3>
+<pre><code class="language-text">waterAreaKm2
+</code></pre>
+<p>The sum of the selected pixel areas within the study area.</p>
+<h3 id="ndwi-time-series">NDWI Time Series</h3>
+<pre><code class="language-text">ndwiChart
+</code></pre>
+<p>A chart showing the mean NDWI of the study area over time.</p>
+<h2 id="limitations">Limitations</h2>
+<p>The water mask depends on the selected NDWI threshold. A threshold of <code>0.1</code> is a configurable criterion and does not guarantee that every selected pixel represents water.</p>
+<p>The median composite summarizes the entire analysis period. Consequently, the calculated area should not be interpreted as water area for a specific year or as the sum of water area across all observations.</p>
+<p>The workflow does not apply an additional explicit pixel-level quality mask using the MOD09A1 quality bands. Results may therefore be affected by residual cloud, atmospheric, or other surface-reflectance uncertainties.</p>
+<p>The estimated area is constrained by the spatial resolution of the MODIS product and the chosen threshold.</p>
+<h2 id="project-structure">Project Structure</h2>
+<pre><code class="language-text">modis-ndwi-water-body-mapping/
+├── README.md
+└── modis-ndwi-water-body-mapping.js
+</code></pre>
+<h2 id="references">References</h2>
+<ul>
+<li>
+<p>Google Earth Engine Data Catalog — MODIS MOD09A1 Version 6.1<br>
+<a href="https://developers.google.com/earth-engine/datasets/catalog/MODIS_061_MOD09A1">https://developers.google.com/earth-engine/datasets/catalog/MODIS_061_MOD09A1</a></p>
+</li>
+<li>
+<p>Google Earth Engine API Documentation — <code>ee.Image.pixelArea()</code><br>
+<a href="https://developers.google.com/earth-engine/apidocs/ee-image-pixelarea">https://developers.google.com/earth-engine/apidocs/ee-image-pixelarea</a></p>
+</li>
+<li>
+<p>Google Earth Engine API Documentation — <code>ui.Chart.image.series()</code><br>
+<a href="https://developers.google.com/earth-engine/apidocs/ui-chart-image-series">https://developers.google.com/earth-engine/apidocs/ui-chart-image-series</a></p>
+</li>
+</ul>
