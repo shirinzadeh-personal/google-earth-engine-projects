@@ -1,0 +1,105 @@
+<span id="markdown-mermaid" aria-hidden="true" data-config="{&quot;darkModeTheme&quot;:&quot;vscode&quot;,&quot;lightModeTheme&quot;:&quot;vscode&quot;,&quot;maxTextSize&quot;:50000,&quot;clickDrag&quot;:&quot;alt&quot;,&quot;showControls&quot;:&quot;onHoverOrFocus&quot;,&quot;resizable&quot;:true,&quot;maxHeight&quot;:&quot;&quot;}"></span>
+				<h1 id="sentinel-1-flood-detection">Sentinel-1 Flood Detection</h1>
+<h2 id="overview">Overview</h2>
+<p>This project uses Google Earth Engine (GEE) and Sentinel-1 Synthetic Aperture Radar (SAR) imagery to identify potential flood-affected areas by analyzing changes in VV backscatter.</p>
+<p>The script compares Sentinel-1 images from February and March 2019 and extracts pixels where the backscatter difference exceeds a specified threshold.</p>
+<h2 id="data-source">Data Source</h2>
+<ul>
+<li><strong>Satellite:</strong> Sentinel-1</li>
+<li><strong>Image Collection:</strong> <code>COPERNICUS/S1_GRD</code></li>
+<li><strong>Polarization:</strong> VV</li>
+<li><strong>Instrument Mode:</strong> IW</li>
+<li><strong>Study Period:</strong> January 1, 2019, to January 1, 2020</li>
+<li><strong>Before Period:</strong> February 2019</li>
+<li><strong>After Period:</strong> March 2019</li>
+</ul>
+<h2 id="workflow">Workflow</h2>
+<ol>
+<li>Define the study area using a polygon.</li>
+<li>Filter Sentinel-1 imagery by location, date, polarization, and instrument mode.</li>
+<li>Reduce speckle noise using a spatial mean filter.</li>
+<li>Generate median VV composites for February and March 2019.</li>
+<li>Calculate the difference between the before-flood and after-flood composites.</li>
+<li>Extract candidate flood-affected pixels using a backscatter difference threshold.</li>
+<li>Calculate the estimated area of the extracted pixels in square kilometers.</li>
+</ol>
+<h2 id="analysis-parameters">Analysis Parameters</h2>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>start_date</code></td>
+<td><code>2019-01-01</code></td>
+<td>Start date</td>
+</tr>
+<tr>
+<td><code>end_date</code></td>
+<td><code>2020-01-01</code></td>
+<td>End date (exclusive)</td>
+</tr>
+<tr>
+<td><code>beforeFloodMonth</code></td>
+<td><code>2</code></td>
+<td>February</td>
+</tr>
+<tr>
+<td><code>afterFloodMonth</code></td>
+<td><code>3</code></td>
+<td>March</td>
+</tr>
+<tr>
+<td><code>speckleRadius</code></td>
+<td><code>30</code></td>
+<td>Speckle filter radius in meters</td>
+</tr>
+<tr>
+<td><code>floodThreshold</code></td>
+<td><code>7</code></td>
+<td>Backscatter difference threshold in dB</td>
+</tr>
+<tr>
+<td><code>scale</code></td>
+<td><code>100</code></td>
+<td>Scale used for regional analysis in meters</td>
+</tr>
+</tbody>
+</table>
+<h2 id="outputs">Outputs</h2>
+<ul>
+<li>Before-flood VV composite</li>
+<li>After-flood VV composite</li>
+<li>VV backscatter change image</li>
+<li>Flood threshold mask</li>
+<li>Flood candidate mask</li>
+<li>Estimated candidate area in square kilometers</li>
+<li>Histogram of backscatter changes</li>
+<li>Image collection sizes for both periods</li>
+</ul>
+<h2 id="flood-area-calculation">Flood Area Calculation</h2>
+<p>The script uses <code>ee.Image.pixelArea()</code> to calculate pixel areas and converts square meters to square kilometers.</p>
+<p>The areas of pixels retained by the flood mask are summed using <code>reduceRegion()</code>.</p>
+<h2 id="limitations">Limitations</h2>
+<ul>
+<li>A backscatter difference greater than the selected threshold does not independently confirm flooding.</li>
+<li>Changes in soil moisture, vegetation, surface conditions, and acquisition geometry may influence the results.</li>
+<li>The analysis compares monthly median composites rather than images acquired at the exact time of a flood event.</li>
+<li>The extracted areas should be validated using independent flood information before being interpreted as actual flood extent.</li>
+</ul>
+<h2 id="requirements">Requirements</h2>
+<ul>
+<li>A Google Earth Engine account</li>
+<li>Access to the Earth Engine Code Editor</li>
+</ul>
+<h2 id="usage">Usage</h2>
+<ol>
+<li>Open the script in the Google Earth Engine Code Editor.</li>
+<li>Run the script.</li>
+<li>Inspect the image layers and histogram.</li>
+<li>Review the estimated area in the Console.</li>
+</ol>
